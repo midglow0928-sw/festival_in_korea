@@ -60,7 +60,7 @@ void main() {
   });
 
   testWidgets('메인 화면에서 대한민국 지도 및 지역 선택 필터가 동작한다', (WidgetTester tester) async {
-    await tester.pumpWidget(const KoreaFestivalApp());
+    await tester.pumpWidget(const KoreaFestivalApp(initialUseNaverMap: false));
     await tester.pumpAndSettle();
 
     expect(find.text('대한민국 2주 내 축제 지도'), findsOneWidget);

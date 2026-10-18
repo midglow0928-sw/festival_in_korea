@@ -9,6 +9,9 @@ enum KoreaRegion {
     areaCode: '1',
     baseColor: Color(0xFFEF5350),
     labelPosition: Offset(132, 98),
+    centerLat: 37.5665,
+    centerLng: 126.9780,
+    defaultZoom: 10.5,
     isMetropolitan: true,
     polygonPoints: [
       Offset(122, 90),
@@ -26,6 +29,9 @@ enum KoreaRegion {
     areaCode: '2',
     baseColor: Color(0xFF29B6F6),
     labelPosition: Offset(96, 102),
+    centerLat: 37.4563,
+    centerLng: 126.7052,
+    defaultZoom: 10.2,
     isMetropolitan: true,
     polygonPoints: [
       Offset(84, 84),
@@ -43,6 +49,9 @@ enum KoreaRegion {
     areaCode: '31',
     baseColor: Color(0xFFFFA726),
     labelPosition: Offset(146, 124),
+    centerLat: 37.4138,
+    centerLng: 127.5183,
+    defaultZoom: 8.8,
     isMetropolitan: false,
     polygonPoints: [
       Offset(106, 54),
@@ -64,6 +73,9 @@ enum KoreaRegion {
     areaCode: '32',
     baseColor: Color(0xFF66BB6A),
     labelPosition: Offset(224, 92),
+    centerLat: 37.8228,
+    centerLng: 128.1555,
+    defaultZoom: 8.3,
     isMetropolitan: false,
     polygonPoints: [
       Offset(145, 48),
@@ -84,6 +96,9 @@ enum KoreaRegion {
     areaCode: '8',
     baseColor: Color(0xFFAB47BC),
     labelPosition: Offset(138, 174),
+    centerLat: 36.4800,
+    centerLng: 127.2890,
+    defaultZoom: 10.8,
     isMetropolitan: true,
     polygonPoints: [
       Offset(131, 164),
@@ -99,6 +114,9 @@ enum KoreaRegion {
     areaCode: '3',
     baseColor: Color(0xFF7E57C2),
     labelPosition: Offset(152, 200),
+    centerLat: 36.3504,
+    centerLng: 127.3845,
+    defaultZoom: 10.6,
     isMetropolitan: true,
     polygonPoints: [
       Offset(142, 190),
@@ -114,6 +132,9 @@ enum KoreaRegion {
     areaCode: '34',
     baseColor: Color(0xFF26A69A),
     labelPosition: Offset(104, 186),
+    centerLat: 36.5184,
+    centerLng: 126.8000,
+    defaultZoom: 8.8,
     isMetropolitan: false,
     polygonPoints: [
       Offset(74, 152),
@@ -134,6 +155,9 @@ enum KoreaRegion {
     areaCode: '33',
     baseColor: Color(0xFF9CCC65),
     labelPosition: Offset(185, 168),
+    centerLat: 36.8000,
+    centerLng: 127.7000,
+    defaultZoom: 8.8,
     isMetropolitan: false,
     polygonPoints: [
       Offset(152, 148),
@@ -153,6 +177,9 @@ enum KoreaRegion {
     areaCode: '37',
     baseColor: Color(0xFFFFCA28),
     labelPosition: Offset(132, 252),
+    centerLat: 35.7175,
+    centerLng: 127.1530,
+    defaultZoom: 8.9,
     isMetropolitan: false,
     polygonPoints: [
       Offset(102, 226),
@@ -170,6 +197,9 @@ enum KoreaRegion {
     areaCode: '5',
     baseColor: Color(0xFFEC407A),
     labelPosition: Offset(122, 304),
+    centerLat: 35.1595,
+    centerLng: 126.8526,
+    defaultZoom: 10.6,
     isMetropolitan: true,
     polygonPoints: [
       Offset(108, 294),
@@ -185,6 +215,9 @@ enum KoreaRegion {
     areaCode: '38',
     baseColor: Color(0xFF42A5F5),
     labelPosition: Offset(124, 342),
+    centerLat: 34.8679,
+    centerLng: 126.9910,
+    defaultZoom: 8.6,
     isMetropolitan: false,
     polygonPoints: [
       Offset(94, 274),
@@ -203,6 +236,9 @@ enum KoreaRegion {
     areaCode: '4',
     baseColor: Color(0xFFFF7043),
     labelPosition: Offset(234, 246),
+    centerLat: 35.8714,
+    centerLng: 128.6014,
+    defaultZoom: 10.4,
     isMetropolitan: true,
     polygonPoints: [
       Offset(218, 232),
@@ -218,6 +254,9 @@ enum KoreaRegion {
     areaCode: '35',
     baseColor: Color(0xFF5C6BC0),
     labelPosition: Offset(248, 192),
+    centerLat: 36.4919,
+    centerLng: 128.8889,
+    defaultZoom: 8.4,
     isMetropolitan: false,
     polygonPoints: [
       Offset(230, 148),
@@ -241,6 +280,9 @@ enum KoreaRegion {
     areaCode: '7',
     baseColor: Color(0xFF26C6DA),
     labelPosition: Offset(284, 278),
+    centerLat: 35.5384,
+    centerLng: 129.3114,
+    defaultZoom: 10.4,
     isMetropolitan: true,
     polygonPoints: [
       Offset(266, 264),
@@ -256,6 +298,9 @@ enum KoreaRegion {
     areaCode: '6',
     baseColor: Color(0xFF1E88E5),
     labelPosition: Offset(272, 314),
+    centerLat: 35.1796,
+    centerLng: 129.0756,
+    defaultZoom: 10.4,
     isMetropolitan: true,
     polygonPoints: [
       Offset(252, 298),
@@ -271,6 +316,9 @@ enum KoreaRegion {
     areaCode: '36',
     baseColor: Color(0xFF8D6E63),
     labelPosition: Offset(218, 298),
+    centerLat: 35.4606,
+    centerLng: 128.2132,
+    defaultZoom: 8.7,
     isMetropolitan: false,
     polygonPoints: [
       Offset(188, 256),
@@ -289,6 +337,9 @@ enum KoreaRegion {
     areaCode: '39',
     baseColor: Color(0xFFFF8A65),
     labelPosition: Offset(116, 412),
+    centerLat: 33.3846,
+    centerLng: 126.5535,
+    defaultZoom: 9.3,
     isMetropolitan: false,
     polygonPoints: [
       Offset(84, 398),
@@ -307,6 +358,9 @@ enum KoreaRegion {
     required this.areaCode,
     required this.baseColor,
     required this.labelPosition,
+    required this.centerLat,
+    required this.centerLng,
+    required this.defaultZoom,
     required this.isMetropolitan,
     required this.polygonPoints,
   });
@@ -317,6 +371,9 @@ enum KoreaRegion {
   final String areaCode;
   final Color baseColor;
   final Offset labelPosition;
+  final double centerLat;
+  final double centerLng;
+  final double defaultZoom;
 
   /// 광역시·특별시는 도(道) 내부에 포함되거나 인접하므로 터치 판정 시 우선순위를 높임
   final bool isMetropolitan;
@@ -324,6 +381,11 @@ enum KoreaRegion {
 
   /// 지도 캔버스의 기준 크기
   static const Size mapCanvasSize = Size(340, 445);
+
+  /// 대한민국 전체 중심 좌표 및 기본 줌
+  static const double koreaCenterLat = 36.15;
+  static const double koreaCenterLng = 127.80;
+  static const double koreaDefaultZoom = 6.2;
 
   /// 폴리곤 Path 생성
   Path toPath() {
@@ -365,5 +427,39 @@ enum KoreaRegion {
       }
     }
     return null;
+  }
+
+  /// 위·경도가 대한민국 영역 내부인지 확인 (해외 기본값 에뮬레이터 좌표 방지)
+  static bool isWithinKoreaBounds(double lat, double lng) {
+    return lat >= 32.8 && lat <= 38.9 && lng >= 124.5 && lng <= 132.0;
+  }
+
+  /// 현재 GPS 위·경도에서 가장 가까운 대한민국 시·도 행정구역 반환
+  static KoreaRegion? nearestToLatLng(double lat, double lng) {
+    if (!isWithinKoreaBounds(lat, lng)) return null;
+
+    // 1차: 광역시·특별시 반경(약 0.16도 ≈ 17km) 이내인지 우선 확인
+    for (final metro in values.where((r) => r.isMetropolitan)) {
+      final dLat = lat - metro.centerLat;
+      final dLng = (lng - metro.centerLng) * 0.8;
+      final distSq = dLat * dLat + dLng * dLng;
+      if (distSq <= 0.16 * 0.16) {
+        return metro;
+      }
+    }
+
+    // 2차: 전체 시·도 중 가장 가까운 중심점을 가진 지역 반환
+    KoreaRegion? closest;
+    var minDistSq = double.infinity;
+    for (final region in values) {
+      final dLat = lat - region.centerLat;
+      final dLng = (lng - region.centerLng) * 0.8;
+      final distSq = dLat * dLat + dLng * dLng;
+      if (distSq < minDistSq) {
+        minDistSq = distSq;
+        closest = region;
+      }
+    }
+    return closest;
   }
 }

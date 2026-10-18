@@ -8,15 +8,18 @@ class FestivalDetailSheet extends StatelessWidget {
     super.key,
     required this.festival,
     required this.referenceDate,
+    this.onShowOnNaverMap,
   });
 
   final Festival festival;
   final DateTime referenceDate;
+  final VoidCallback? onShowOnNaverMap;
 
   static Future<void> show(
     BuildContext context, {
     required Festival festival,
     required DateTime referenceDate,
+    VoidCallback? onShowOnNaverMap,
   }) {
     return showModalBottomSheet<void>(
       context: context,
@@ -25,6 +28,7 @@ class FestivalDetailSheet extends StatelessWidget {
       builder: (_) => FestivalDetailSheet(
         festival: festival,
         referenceDate: referenceDate,
+        onShowOnNaverMap: onShowOnNaverMap,
       ),
     );
   }
@@ -153,6 +157,34 @@ class FestivalDetailSheet extends StatelessWidget {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
+                    if (onShowOnNaverMap != null) ...[
+                      const SizedBox(height: 14),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF03C75A),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            onShowOnNaverMap!();
+                          },
+                          icon: const Icon(Icons.map_rounded, size: 18),
+                          label: const Text(
+                            '네이버 지도에서 축제 위치 보기',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 18),
 
                     // 주요 정보 박스

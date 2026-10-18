@@ -150,6 +150,9 @@ class FestivalService {
     final cityOrDistrict =
         addressTokens.length >= 2 ? addressTokens[1] : region.shortName;
 
+    final lat = double.tryParse((item['mapy'] ?? '').toString().trim());
+    final lng = double.tryParse((item['mapx'] ?? '').toString().trim());
+
     return Festival(
       id: (item['contentid'] ?? title).toString(),
       title: title,
@@ -157,6 +160,8 @@ class FestivalService {
       cityOrDistrict: cityOrDistrict,
       venue: addr2.isNotEmpty ? addr2 : addr1,
       address: fullAddress.isNotEmpty ? fullAddress : region.fullName,
+      latitude: lat,
+      longitude: lng,
       startDate: startDate,
       endDate: endDate,
       category: '문화·관광축제',

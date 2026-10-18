@@ -19,6 +19,8 @@ class Festival {
     required this.category,
     required this.summary,
     required this.description,
+    this.latitude,
+    this.longitude,
     this.tel = '',
     this.feeInfo = '무료 (일부 체험 프로그램 유료)',
     this.homepageUrl = '',
@@ -37,11 +39,19 @@ class Festival {
   final String category;
   final String summary;
   final String description;
+  final double? latitude;
+  final double? longitude;
   final String tel;
   final String feeInfo;
   final String homepageUrl;
   final String imageUrl;
   final List<String> highlights;
+
+  /// 네이버 지도 마커 표시용 위도 (미지정 시 지역 중심 위도 반환)
+  double get effectiveLat => latitude ?? region.centerLat;
+
+  /// 네이버 지도 마커 표시용 경도 (미지정 시 지역 중심 경도 반환)
+  double get effectiveLng => longitude ?? region.centerLng;
 
   /// 날짜의 시/분/초를 제거한 자정 기준 날짜 반환
   static DateTime dateOnly(DateTime dt) => DateTime(dt.year, dt.month, dt.day);

@@ -5,6 +5,7 @@ import '../models/korea_region.dart';
 import '../services/festival_service.dart';
 import '../widgets/festival_detail_sheet.dart';
 import '../widgets/korea_map_widget.dart';
+import '../widgets/naver_festival_map_widget.dart';
 
 enum ScheduleFilter {
   allWithinTwoWeeks('2주 이내 전체'),
@@ -16,7 +17,18 @@ enum ScheduleFilter {
 }
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({
+    super.key,
+    this.initialUseNaverMap = true,
+    this.naverAuthErrorMessage,
+    this.naverMapRevision = 0,
+    this.onRetryNaverAuth,
+  });
+
+  final bool initialUseNaverMap;
+  final String? naverAuthErrorMessage;
+  final int naverMapRevision;
+  final VoidCallback? onRetryNaverAuth;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -25,12 +37,15 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final FestivalService _festivalService = FestivalService();
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   DateTime _referenceDate = Festival.dateOnly(DateTime.now());
   KoreaRegion? _selectedRegion;
+  Festival? _focusedFestival;
   ScheduleFilter _scheduleFilter = ScheduleFilter.allWithinTwoWeeks;
   String _searchQuery = '';
   String _tourApiKey = '';
+  late bool _useNaverMap = widget.initialUseNaverMap;
 
   List<Festival> _allFestivals = [];
   bool _isLoading = true;
@@ -45,6 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -121,6 +137,30 @@ class _HomeScreenState extends State<HomeScreen> {
       }
       return true;
     }).toList();
+  }
+
+  void _focusFestivalOnNaverMap(Festival festival) {
+    setState(() {
+      _useNaverMap = true;
+      _selectedRegion = festival.region;
+      _focusedFestival = festival;
+    });
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+      );
+    }
+  }
+
+  void _openFestivalDetail(Festival festival) {
+    FestivalDetailSheet.show(
+      context,
+      festival: festival,
+      referenceDate: _referenceDate,
+      onShowOnNaverMap: () => _focusFestivalOnNaverMap(festival),
+    );
   }
 
   Future<void> _pickReferenceDate() async {
@@ -208,16 +248,25 @@ class _HomeScreenState extends State<HomeScreen> {
         titleSpacing: 16,
         title: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                Icons.festival_rounded,
-                size: 20,
-                color: Theme.of(context).colorScheme.primary,
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.asset(
+                'assets/icon/app_icon.png',
+                width: 36,
+                height: 36,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.festival_rounded,
+                    size: 20,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 10),
@@ -263,10 +312,10 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Column(
         children: [
-          // 1. 현재 기준일 ~ 2주 이내 조회 기간 배너
+          // 1. 현재 기준일 ~ 2주 이내 조회 기간 배너 + 지도 모드 전환 스위치
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: const BoxDecoration(
               color: Color(0xFF1E293B),
             ),
@@ -274,258 +323,377 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 const Icon(
                   Icons.date_range_rounded,
-                  size: 17,
+                  size: 16,
                   color: Color(0xFF38BDF8),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     '조회 기간 (2주): ${Festival.formatDate(_referenceDate)} ~ ${Festival.formatDate(twoWeeksLater)}',
                     style: const TextStyle(
-                      fontSize: 12.5,
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
                     ),
                   ),
                 ),
                 if (!isToday)
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _referenceDate = today;
-                      });
-                      _loadFestivals();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF38BDF8),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        '오늘로 복귀',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F172A),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _referenceDate = today;
+                        });
+                        _loadFestivals();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF38BDF8),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          '오늘로 복귀',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
                         ),
                       ),
                     ),
-                  )
-                else
-                  Container(
+                  ),
+                // 네이버 지도 <-> 행정구역 지도 전환 버튼
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _useNaverMap = !_useNaverMap;
+                    });
+                  },
+                  child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
+                      horizontal: 9,
+                      vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.14),
-                      borderRadius: BorderRadius.circular(8),
+                      color: _useNaverMap
+                          ? const Color(0xFF03C75A)
+                          : Colors.white.withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Text(
-                      _isFromApi ? '실시간 TourAPI' : '전국 17개 시도',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFFE2E8F0),
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _useNaverMap
+                              ? Icons.map_rounded
+                              : Icons.grid_view_rounded,
+                          size: 13,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _useNaverMap ? '네이버 지도 (전환)' : '행정구역도 (전환)',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                ),
               ],
             ),
           ),
 
-          // 2. 메인 스크롤 영역 (대한민국 지도 + 지역 선택 칩 + 축제 리스트)
+          // 2. 메인 스크롤 영역 (첫 화면: 대형 지도 + 지역 칩 + 검색/필터 도구, 스크롤 시 축제 카드 목록)
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : CustomScrollView(
-                    cacheExtent: 600,
-                    slivers: [
-                      // 대한민국 지도 영역
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
-                          child: SizedBox(
-                            height: 270,
-                            child: KoreaMapWidget(
-                              selectedRegion: _selectedRegion,
-                              festivalCountsByRegion: countsByRegion,
-                              onRegionSelected: (region) {
-                                setState(() {
-                                  _selectedRegion = region;
-                                });
-                              },
+                : LayoutBuilder(
+                    builder: (context, constraints) {
+                      // 첫 화면에 지도 + 지역 칩(44) + 검색/필터 도구(~176)만 딱 맞게 보이도록 지도 높이 자동 계산
+                      final mapHeight = (constraints.maxHeight - 224).clamp(
+                        340.0,
+                        720.0,
+                      );
+
+                      return CustomScrollView(
+                        controller: _scrollController,
+                        cacheExtent: 800,
+                        slivers: [
+                          // 대한민국 지도 영역 (네이버 지도 SDK 또는 17개 시도 폴리곤 지도)
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                14,
+                                10,
+                                14,
+                                8,
+                              ),
+                              child: SizedBox(
+                                height: mapHeight,
+                                child: _useNaverMap
+                                    ? NaverFestivalMapWidget(
+                                        key: ValueKey(widget.naverMapRevision),
+                                        selectedRegion: _selectedRegion,
+                                        festivalsWithinTwoWeeks:
+                                            _festivalsWithinTwoWeeks,
+                                        festivalCountsByRegion: countsByRegion,
+                                        referenceDate: _referenceDate,
+                                        focusedFestival: _focusedFestival,
+                                        authErrorMessage:
+                                            widget.naverAuthErrorMessage,
+                                        onRetryAuth: widget.onRetryNaverAuth,
+                                        onRegionSelected: (region) {
+                                          setState(() {
+                                            _selectedRegion = region;
+                                            _focusedFestival = null;
+                                          });
+                                        },
+                                        onFestivalTapped: _openFestivalDetail,
+                                      )
+                                    : KoreaMapWidget(
+                                        selectedRegion: _selectedRegion,
+                                        festivalCountsByRegion: countsByRegion,
+                                        onRegionSelected: (region) {
+                                          setState(() {
+                                            _selectedRegion = region;
+                                            _focusedFestival = null;
+                                          });
+                                        },
+                                      ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
 
-                      // 가로 스크롤 지역 빠른 선택 바
-                      SliverToBoxAdapter(
-                        child: SizedBox(
-                          height: 44,
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            padding: const EdgeInsets.symmetric(horizontal: 14),
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(right: 6),
-                                child: ChoiceChip(
-                                  label: Text(
-                                    '전국 (${_festivalsWithinTwoWeeks.length})',
-                                  ),
-                                  selected: _selectedRegion == null,
-                                  onSelected: (_) {
-                                    setState(() {
-                                      _selectedRegion = null;
-                                    });
-                                  },
+                          // 가로 스크롤 지역 빠른 선택 바
+                          SliverToBoxAdapter(
+                            child: SizedBox(
+                              height: 44,
+                              child: ListView(
+                                scrollDirection: Axis.horizontal,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
                                 ),
-                              ),
-                              ...KoreaRegion.values.map((region) {
-                                final count = countsByRegion[region] ?? 0;
-                                final isSelected = _selectedRegion == region;
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 6),
-                                  child: ChoiceChip(
-                                    label: Text('${region.shortName} ($count)'),
-                                    selected: isSelected,
-                                    selectedColor: region.baseColor.withValues(
-                                      alpha: 0.25,
-                                    ),
-                                    onSelected: (_) {
-                                      setState(() {
-                                        _selectedRegion =
-                                            isSelected ? null : region;
-                                      });
-                                    },
-                                  ),
-                                );
-                              }),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      // 검색 및 일정 상태 필터 바
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
                                 children: [
-                                  Expanded(
-                                    child: Text(
-                                      _selectedRegion == null
-                                          ? '전국 2주 이내 축제 (${filtered.length}건)'
-                                          : '${_selectedRegion!.fullName} 2주 이내 축제 (${filtered.length}건)',
-                                      style: const TextStyle(
-                                        fontSize: 16.5,
-                                        fontWeight: FontWeight.w800,
-                                        color: Color(0xFF0F172A),
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 6),
+                                    child: ChoiceChip(
+                                      label: Text(
+                                        '전국 (${_festivalsWithinTwoWeeks.length})',
                                       ),
-                                    ),
-                                  ),
-                                  if (_selectedRegion != null)
-                                    TextButton.icon(
-                                      style: TextButton.styleFrom(
-                                        visualDensity: VisualDensity.compact,
-                                      ),
-                                      onPressed: () {
+                                      selected: _selectedRegion == null,
+                                      onSelected: (_) {
                                         setState(() {
                                           _selectedRegion = null;
+                                          _focusedFestival = null;
                                         });
                                       },
-                                      icon: const Icon(Icons.close, size: 15),
-                                      label: const Text('지역 해제'),
                                     ),
+                                  ),
+                                  ...KoreaRegion.values.map((region) {
+                                    final count = countsByRegion[region] ?? 0;
+                                    final isSelected =
+                                        _selectedRegion == region;
+                                    return Padding(
+                                      padding: const EdgeInsets.only(right: 6),
+                                      child: ChoiceChip(
+                                        label: Text(
+                                          '${region.shortName} ($count)',
+                                        ),
+                                        selected: isSelected,
+                                        selectedColor: region.baseColor
+                                            .withValues(alpha: 0.25),
+                                        onSelected: (_) {
+                                          setState(() {
+                                            _selectedRegion = isSelected
+                                                ? null
+                                                : region;
+                                            _focusedFestival = null;
+                                          });
+                                        },
+                                      ),
+                                    );
+                                  }),
                                 ],
                               ),
-                              const SizedBox(height: 6),
-                              // 검색창
-                              TextField(
-                                controller: _searchController,
-                                onChanged: (value) {
-                                  setState(() {
-                                    _searchQuery = value.trim();
-                                  });
-                                },
-                                decoration: InputDecoration(
-                                  hintText: '축제명, 시·군·구, 카테고리 검색',
-                                  prefixIcon: const Icon(
-                                    Icons.search_rounded,
-                                    size: 20,
-                                  ),
-                                  suffixIcon: _searchQuery.isNotEmpty
-                                      ? IconButton(
-                                          icon: const Icon(
-                                            Icons.clear_rounded,
-                                            size: 18,
+                            ),
+                          ),
+
+                          // 검색 및 일정 상태 필터 바 (첫 화면 하단에 위치)
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                14,
+                                8,
+                                14,
+                                10,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          _selectedRegion == null
+                                              ? '전국 2주 이내 축제 (${filtered.length}건)'
+                                              : '${_selectedRegion!.fullName} 2주 이내 축제 (${filtered.length}건)',
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w800,
+                                            color: Color(0xFF0F172A),
+                                          ),
+                                        ),
+                                      ),
+                                      if (_selectedRegion != null)
+                                        TextButton.icon(
+                                          style: TextButton.styleFrom(
+                                            visualDensity:
+                                                VisualDensity.compact,
                                           ),
                                           onPressed: () {
-                                            _searchController.clear();
                                             setState(() {
-                                              _searchQuery = '';
+                                              _selectedRegion = null;
+                                              _focusedFestival = null;
                                             });
                                           },
-                                        )
-                                      : null,
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  isDense: true,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 10,
-                                  ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFFE2E8F0),
-                                    ),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFFE2E8F0),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              // 상태 세그먼트 칩 (2주 이내 전체 / 현재 진행 중 / 2주 내 개막 예정)
-                              Wrap(
-                                spacing: 8,
-                                children: ScheduleFilter.values.map((filter) {
-                                  final selected = _scheduleFilter == filter;
-                                  return FilterChip(
-                                    label: Text(
-                                      filter.label,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: selected
-                                            ? FontWeight.w700
-                                            : FontWeight.w500,
+                                          icon: const Icon(
+                                            Icons.close,
+                                            size: 15,
+                                          ),
+                                          label: const Text('지역 해제'),
+                                        ),
+                                      TextButton.icon(
+                                        style: TextButton.styleFrom(
+                                          visualDensity: VisualDensity.compact,
+                                        ),
+                                        onPressed: () {
+                                          if (_scrollController.hasClients) {
+                                            _scrollController.animateTo(
+                                              mapHeight + 50,
+                                              duration: const Duration(
+                                                milliseconds: 400,
+                                              ),
+                                              curve: Curves.easeOutCubic,
+                                            );
+                                          }
+                                        },
+                                        icon: const Icon(
+                                          Icons.keyboard_arrow_down_rounded,
+                                          size: 18,
+                                        ),
+                                        label: const Text('목록 보기'),
                                       ),
-                                    ),
-                                    selected: selected,
-                                    onSelected: (_) {
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  // 검색창
+                                  TextField(
+                                    controller: _searchController,
+                                    onChanged: (value) {
                                       setState(() {
-                                        _scheduleFilter = filter;
+                                        _searchQuery = value.trim();
                                       });
                                     },
-                                  );
-                                }).toList(),
+                                    decoration: InputDecoration(
+                                      hintText: '축제명, 시·군·구, 카테고리 검색',
+                                      prefixIcon: const Icon(
+                                        Icons.search_rounded,
+                                        size: 20,
+                                      ),
+                                      suffixIcon: _searchQuery.isNotEmpty
+                                          ? IconButton(
+                                              icon: const Icon(
+                                                Icons.clear_rounded,
+                                                size: 18,
+                                              ),
+                                              onPressed: () {
+                                                _searchController.clear();
+                                                setState(() {
+                                                  _searchQuery = '';
+                                                });
+                                              },
+                                            )
+                                          : null,
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      isDense: true,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 14,
+                                            vertical: 10,
+                                          ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xFFE2E8F0),
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xFFE2E8F0),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  // 상태 세그먼트 칩 + 스크롤 안내
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: SingleChildScrollView(
+                                          scrollDirection: Axis.horizontal,
+                                          child: Row(
+                                            children: ScheduleFilter.values.map(
+                                              (filter) {
+                                                final selected =
+                                                    _scheduleFilter == filter;
+                                                return Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                        right: 8,
+                                                      ),
+                                                  child: FilterChip(
+                                                    visualDensity: VisualDensity
+                                                        .compact,
+                                                    label: Text(
+                                                      filter.label,
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight: selected
+                                                            ? FontWeight.w700
+                                                            : FontWeight.w500,
+                                                      ),
+                                                    ),
+                                                    selected: selected,
+                                                    onSelected: (_) {
+                                                      setState(() {
+                                                        _scheduleFilter =
+                                                            filter;
+                                                      });
+                                                    },
+                                                  ),
+                                                );
+                                              },
+                                            ).toList(),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
 
                       // 축제 카드 리스트
                       if (filtered.isEmpty)
@@ -574,17 +742,17 @@ class _HomeScreenState extends State<HomeScreen> {
                               return _FestivalCard(
                                 festival: festival,
                                 referenceDate: _referenceDate,
-                                onTap: () => FestivalDetailSheet.show(
-                                  context,
-                                  festival: festival,
-                                  referenceDate: _referenceDate,
-                                ),
+                                onTap: () => _openFestivalDetail(festival),
+                                onMapFocusTap: () =>
+                                    _focusFestivalOnNaverMap(festival),
                               );
                             },
                           ),
                         ),
                     ],
-                  ),
+                  );
+                },
+              ),
           ),
         ],
       ),
@@ -597,11 +765,13 @@ class _FestivalCard extends StatelessWidget {
     required this.festival,
     required this.referenceDate,
     required this.onTap,
+    required this.onMapFocusTap,
   });
 
   final Festival festival;
   final DateTime referenceDate;
   final VoidCallback onTap;
+  final VoidCallback onMapFocusTap;
 
   @override
   Widget build(BuildContext context) {
@@ -684,14 +854,55 @@ class _FestivalCard extends StatelessWidget {
               ),
               const SizedBox(height: 10),
 
-              // 축제명
-              Text(
-                festival.title,
-                style: const TextStyle(
-                  fontSize: 16.5,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
-                ),
+              // 축제명 + 네이버 지도 위치 이동 버튼
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      festival.title,
+                      style: const TextStyle(
+                        fontSize: 16.5,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: onMapFocusTap,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF03C75A).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.location_on_rounded,
+                            size: 13,
+                            color: Color(0xFF03C75A),
+                          ),
+                          SizedBox(width: 2),
+                          Text(
+                            '지도위치',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF028A3E),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 4),
 
